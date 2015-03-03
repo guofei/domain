@@ -4,7 +4,7 @@ class DomainsController < ApplicationController
   # GET /domains
   # GET /domains.json
   def index
-    @domains = Domain.all
+    @domains = Domain.order("expires_on").page params[:page]
   end
 
   # GET /domains/1

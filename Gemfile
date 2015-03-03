@@ -47,3 +47,5 @@ gem 'whois', '~> 3.5.8'
 gem 'public_suffix', '~> 1.4.6'
 
 gem 'mechanize', '~> 2.7.3'
+
+gem 'kaminari', '~> 0.16.3'

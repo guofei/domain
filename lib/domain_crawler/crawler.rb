@@ -23,7 +23,9 @@ module DomainCrawler
       if depth <= 0
         page.links.each do |link|
           if link.uri && link.uri.host
-            block.call get_domain(link.uri.host)
+            unless Domain.exists?(get_domain link.uri.host)
+              block.call get_domain(link.uri.host)
+            end
           end
         end
       else
@@ -35,7 +37,7 @@ module DomainCrawler
                 page = link.click
                 craw(page, depth - 1, &block)
               rescue => e
-                  p e
+                p e
               end
             end
           end
