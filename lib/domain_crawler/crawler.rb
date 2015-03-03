@@ -18,35 +18,35 @@ module DomainCrawler
 
     def craw(page, depth, &block)
       return if page.class != Mechanize::Page
-      return if exists?(page.uri.host)
-
-      if depth <= 0
-        page.links.each do |link|
-          if link.uri && link.uri.host
-            unless exists?(link.uri.host)
-              block.call get_domain(link.uri.host)
-            end
-          end
-        end
-      else
+      unless exists?(page.uri.host)
         block.call get_domain(page.uri.host)
-        page.links.each do |link|
-          if link.uri && link.uri.host
+      else
+        return
+      end
+
+      page.links.each do |link|
+        begin
+          if link.uri && link.uri.host && link.uri.host != page.uri.host
             unless exists?(link.uri.host)
-              begin
-                page = link.click
-                craw(page, depth - 1, &block)
-              rescue => e
-                p e
+              if depth <= 0
+                block.call get_domain(link.uri.host)
+              else
+                craw(link.click, depth - 1, &block)
               end
             end
           end
+        rescue => e
+          p e
         end
       end
     end
 
     def exists?(host)
-      Domain.exists?(get_domain host)
+      if host.include? ".com."
+        true
+      else
+        Domain.exists?(url: get_domain(host))
+      end
     end
 
     def get_domain(host)
@@ -104,8 +104,14 @@ module DomainCrawler
     def each_page
       @keywords.each do |keyword|
         @search.s keyword do |link|
-          if link.href.include?("/url?q=") && !link.href.include?("google")
-            yield link.click
+          begin
+	    if link.href.include?("/url?q=http") &&
+               !link.href.include?("google") &&
+               link.uri.host == nil
+              yield link.click
+            end
+          rescue => e
+	    p e
           end
         end
       end
