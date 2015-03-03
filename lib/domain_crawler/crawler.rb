@@ -18,12 +18,12 @@ module DomainCrawler
 
     def craw(page, depth, &block)
       return if page.class != Mechanize::Page
-      return if Domain.exists?(get_domain page.uri.host)
+      return if exists?(page.uri.host)
 
       if depth <= 0
         page.links.each do |link|
           if link.uri && link.uri.host
-            unless Domain.exists?(get_domain link.uri.host)
+            unless exists?(link.uri.host)
               block.call get_domain(link.uri.host)
             end
           end
@@ -32,7 +32,7 @@ module DomainCrawler
         block.call get_domain(page.uri.host)
         page.links.each do |link|
           if link.uri && link.uri.host
-            unless Domain.exists?(get_domain link.uri.host)
+            unless exists?(link.uri.host)
               begin
                 page = link.click
                 craw(page, depth - 1, &block)
@@ -45,8 +45,13 @@ module DomainCrawler
       end
     end
 
+    def exists?(host)
+      Domain.exists?(get_domain host)
+    end
+
     def get_domain(host)
-      PublicSuffix.parse(host).domain
+      dm = PublicSuffix.parse(host).domain
+      dm.sub(/.*?([^.]+(\.com))$/, "\\1")
     end
   end
 
@@ -81,7 +86,7 @@ module DomainCrawler
     end
 
     def google_form
-      google_page = @agent.get('http://www.google.co.jp/')
+      google_page = @agent.get('http://www.google.co.jp/webhp?hl=ja')
       google_form = google_page.form('f')
     end
   end
