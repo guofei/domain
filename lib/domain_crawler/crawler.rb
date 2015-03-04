@@ -1,4 +1,6 @@
 # coding: utf-8
+require "thread"
+
 module DomainCrawler
   class Crawler
     def initialize(keyword)
@@ -7,7 +9,7 @@ module DomainCrawler
     end
 
     def get(depth = 3)
-      @search_keyword.each_page do |page|
+      each_page_in_threads @search_keyword do |page|
         craw page, depth do |host|
           yield host
         end
@@ -15,6 +17,25 @@ module DomainCrawler
     end
 
     private
+
+    TERMINATOR = Object.new
+
+    def each_page_in_threads(enumerable, n_thread = 10)
+      queue = SizedQueue.new(n_thread)
+      threads = n_thread.times.map do
+        Thread.new do
+          while true
+            v = queue.shift
+            break if v.equal?(TERMINATOR)
+            yield v
+          end
+        end
+      end
+      enumerable.each_page{|v| queue << v }
+      n_thread.times{ queue << TERMINATOR }
+      threads.each(&:join)
+      enumerable
+    end
 
     def craw(page, depth, &block)
       return if page.class != Mechanize::Page
@@ -43,6 +64,8 @@ module DomainCrawler
 
     def exists?(host)
       if host.include? ".com."
+        true
+      elsif host.include? "blogspot."
         true
       else
         Domain.exists?(url: get_domain(host))
