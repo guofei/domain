@@ -63,9 +63,7 @@ module DomainCrawler
     end
 
     def exists?(host)
-      if host.include? ".com."
-        true
-      elsif host.include? "blogspot."
+      if host =~ /.+\..+\..+/
         true
       else
         Domain.exists?(url: get_domain(host))

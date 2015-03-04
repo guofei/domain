@@ -1,10 +1,11 @@
 namespace :crawler do
   task get: :environment do
     crawler = DomainCrawler::Crawler.new("c++ std vector")
+    w = Whois::Client.new
     crawler.get do |host|
       p host
       begin
-        whois = Whois::whois(host)
+        whois = w.lookup(host)
         if whois.registered?
           if whois.expires_on
             Domain.create(url: host, expires_on: whois.expires_on)
