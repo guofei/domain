@@ -10,7 +10,7 @@ namespace :crawler do
             Domain.create(url: host, expires_on: whois.expires_on)
           else
             p "unknow: #{host}"
-            Domain.create(url: host, expires_on: Time.now.next_year)
+            Domain.create(url: host, expires_on: Time.now.next_year, unknown: true)
           end
         else
           Domain.create(url: host, expires_on: Time.now.prev_year)
