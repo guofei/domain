@@ -63,7 +63,7 @@ module DomainCrawler
     end
 
     def exists?(host)
-      if host =~ /.+\..+\..+/
+      if host =~ /.+\..+\..+/ && !host.include?("ac.jp")
         true
       else
         Domain.exists?(url: get_domain(host))
