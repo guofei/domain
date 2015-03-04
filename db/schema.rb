@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150304025609) do
+ActiveRecord::Schema.define(version: 20150304143519) do
 
   create_table "domains", force: :cascade do |t|
     t.string   "url"
@@ -19,6 +19,7 @@ ActiveRecord::Schema.define(version: 20150304025609) do
     t.datetime "created_at",                 null: false
     t.datetime "updated_at",                 null: false
     t.boolean  "unknown",    default: false
+    t.boolean  "deleted",    default: false
   end
 
   add_index "domains", ["url"], name: "index_domains_on_url", unique: true
