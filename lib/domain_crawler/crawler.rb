@@ -65,13 +65,13 @@ module DomainCrawler
     def exists?(host)
       begin
         if host =~ /.+\..+\..+/ && !host.include?("ac.jp")
-          true
+          return true
         else
-          Domain.exists?(url: get_domain(host))
+          return Domain.exists?(url: get_domain(host))
         end
       rescue Exception => e
 	p e
-        true
+        return true
       end
     end
 
