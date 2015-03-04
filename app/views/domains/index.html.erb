@@ -15,7 +15,7 @@
     <% @domains.each do |domain| %>
       <tr>
         <td><%= domain.url %></td>
-        <td><%= domain.expires_on %></td>
+        <td><%= domain.deleted ? "Deleted" : domain.expires_on %></td>
         <td><%= link_to 'Show', domain %></td>
         <td><%= link_to 'Edit', edit_domain_path(domain) %></td>
         <td><%= link_to 'Destroy', domain, method: :delete, data: { confirm: 'Are you sure?' } %></td>

@@ -14,7 +14,7 @@ namespace :crawler do
             Domain.create(url: host, expires_on: Time.now.next_year, unknown: true)
           end
         else
-          Domain.create(url: host, expires_on: Time.now.prev_year)
+          Domain.create(url: host, expires_on: Time.now.prev_year, deleted: true)
         end
       rescue Exception => e
 	p e
