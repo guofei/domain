@@ -6,6 +6,7 @@ module DomainCrawler
     def initialize(keyword)
       @search_keyword = SearchKeyword.new
       @search_keyword.add keyword
+      @history = History.new
     end
 
     def get(depth = 3)
@@ -20,7 +21,7 @@ module DomainCrawler
 
     TERMINATOR = Object.new
 
-    def each_page_in_threads(enumerable, n_thread = 10)
+    def each_page_in_threads(enumerable, n_thread = 5)
       queue = SizedQueue.new(n_thread)
       threads = n_thread.times.map do
         Thread.new do
@@ -41,6 +42,7 @@ module DomainCrawler
       return if page.class != Mechanize::Page
       unless exists?(page.uri.host)
         block.call get_domain(page.uri.host)
+        @history.add page.uri.host
       else
         return
       end
@@ -51,6 +53,7 @@ module DomainCrawler
             unless exists?(link.uri.host)
               if depth <= 0
                 block.call get_domain(link.uri.host)
+                @history.add link.uri.host
               else
                 craw(link.click, depth - 1, &block)
               end
@@ -63,16 +66,7 @@ module DomainCrawler
     end
 
     def exists?(host)
-      begin
-        if host =~ /.+\..+\..+/ && !host.include?("ac.jp")
-          return true
-        else
-          return Domain.exists?(url: get_domain(host))
-        end
-      rescue Exception => e
-	p e
-        return true
-      end
+      @history.include? host
     end
 
     def get_domain(host)
@@ -141,6 +135,20 @@ module DomainCrawler
           end
         end
       end
+    end
+  end
+
+  class History
+    def initialize
+      @hash = {}
+    end
+
+    def add(host)
+      @hash[host] = true
+    end
+
+    def include?(host)
+      @hash[host]
     end
   end
 end
