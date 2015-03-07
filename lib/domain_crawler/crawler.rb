@@ -41,8 +41,7 @@ module DomainCrawler
     def craw(page, depth, &block)
       return if page.class != Mechanize::Page
       unless exists?(page.uri.host)
-        block.call get_domain(page.uri.host)
-        @history.add page.uri.host
+        check_and_call page.uri.host
       else
         return
       end
@@ -52,8 +51,7 @@ module DomainCrawler
           if link.uri && link.uri.host && link.uri.host != page.uri.host
             unless exists?(link.uri.host)
               if depth <= 0
-                block.call get_domain(link.uri.host)
-                @history.add link.uri.host
+                check_and_call link.uri.host
               else
                 craw(link.click, depth - 1, &block)
               end
@@ -63,6 +61,15 @@ module DomainCrawler
           p e
         end
       end
+    end
+
+    def check_and_call(host)
+      begin
+        IPSocket::getaddress(host)
+      rescue Exception => e
+        block.call get_domain(host)
+      end
+      @history.add host
     end
 
     def exists?(host)
