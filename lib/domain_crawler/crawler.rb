@@ -148,14 +148,19 @@ module DomainCrawler
   class History
     def initialize
       @hash = {}
+      @mutex = Mutex.new
     end
 
     def add(host)
-      @hash[host] = true
+      @mutex.synchronize do
+        @hash[host] = true
+      end
     end
 
     def include?(host)
-      @hash[host]
+      @mutex.synchronize do
+        @hash[host]
+      end
     end
   end
 end
