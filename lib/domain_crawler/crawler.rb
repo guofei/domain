@@ -10,7 +10,7 @@ module DomainCrawler
     end
 
     def get(depth = 3)
-      each_page_in_threads @search_keyword do |page|
+      @search_keyword.each_page do |page|
         craw page, depth do |host|
           yield host
         end
@@ -19,41 +19,43 @@ module DomainCrawler
 
     private
 
-    TERMINATOR = Object.new
+    # TERMINATOR = Object.new
 
-    def each_page_in_threads(enumerable, n_thread = 5)
-      queue = SizedQueue.new(n_thread)
-      threads = n_thread.times.map do
-        Thread.new do
-          loop do
-            v = queue.shift
-            break if v.equal?(TERMINATOR)
-            yield v
-          end
-        end
-      end
-      enumerable.each_page { |v| queue << v }
-      n_thread.times { queue << TERMINATOR }
-      threads.each(&:join)
-      enumerable
-    end
+    # def each_page_in_threads(enumerable, n_thread = 1)
+      # queue = SizedQueue.new(n_thread)
+      # threads = n_thread.times.map do
+      #   Thread.new do
+      #     loop do
+      #       v = queue.shift
+      #       break if v.equal?(TERMINATOR)
+      #       yield v
+      #     end
+      #   end
+      # end
+      # enumerable.each_page { |v| queue << v }
+      # n_thread.times { queue << TERMINATOR }
+      # threads.each(&:join)
+      # enumerable
+    # end
 
     def craw(page, depth, &block)
       return if page.class != Mechanize::Page
-      if exists?(page.uri.host)
+      domain = get_domain page.uri.host
+      if exists?(domain)
         return
       else
-        check_and_call page.uri.host, &block
+        check_and_call domain, &block
       end
 
       page.links.each do |link|
         begin
           if link.uri && link.uri.host && link.uri.host != page.uri.host
-            unless exists?(link.uri.host)
+            domain = get_domain link.uri.host
+            unless exists?(domain)
               if depth <= 0
-                check_and_call link.uri.host, &block
+                check_and_call domain, &block
               else
-                craw(link.click, depth - 1, &block)
+                craw(domain, depth - 1, &block)
               end
             end
           end
@@ -67,7 +69,7 @@ module DomainCrawler
       begin
         block.call get_domain(host)
       end
-      @history.add host
+      @history.add get_domain(host)
     end
 
     def exists?(host)
