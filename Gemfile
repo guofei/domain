@@ -43,8 +43,8 @@ group :development, :test do
   gem 'spring'
 end
 
-gem 'whois', '~> 3.5.8'
-gem 'public_suffix', '~> 1.4.6'
+gem 'whois', '~> 3.6.2'
+gem 'public_suffix', '~> 1.5.1'
 
 gem 'mechanize', '~> 2.7.3'
 

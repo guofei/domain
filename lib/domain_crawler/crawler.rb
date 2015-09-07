@@ -25,25 +25,25 @@ module DomainCrawler
       queue = SizedQueue.new(n_thread)
       threads = n_thread.times.map do
         Thread.new do
-          while true
+          loop do
             v = queue.shift
             break if v.equal?(TERMINATOR)
             yield v
           end
         end
       end
-      enumerable.each_page{|v| queue << v }
-      n_thread.times{ queue << TERMINATOR }
+      enumerable.each_page { |v| queue << v }
+      n_thread.times { queue << TERMINATOR }
       threads.each(&:join)
       enumerable
     end
 
     def craw(page, depth, &block)
       return if page.class != Mechanize::Page
-      unless exists?(page.uri.host)
-        check_and_call page.uri.host
-      else
+      if exists?(page.uri.host)
         return
+      else
+        check_and_call page.uri.host, &block
       end
 
       page.links.each do |link|
@@ -51,7 +51,7 @@ module DomainCrawler
           if link.uri && link.uri.host && link.uri.host != page.uri.host
             unless exists?(link.uri.host)
               if depth <= 0
-                check_and_call link.uri.host
+                check_and_call link.uri.host, &block
               else
                 craw(link.click, depth - 1, &block)
               end
@@ -63,10 +63,8 @@ module DomainCrawler
       end
     end
 
-    def check_and_call(host)
+    def check_and_call(host, &block)
       begin
-        IPSocket::getaddress(host)
-      rescue Exception => e
         block.call get_domain(host)
       end
       @history.add host
@@ -77,8 +75,8 @@ module DomainCrawler
     end
 
     def get_domain(host)
-      dm = PublicSuffix.parse(host).domain
-      dm.sub(/.*?([^.]+(\.com))$/, "\\1")
+      PublicSuffix::List.private_domains = false
+      PublicSuffix.parse(host).domain
     end
   end
 
@@ -93,7 +91,7 @@ module DomainCrawler
       form = google_form
       form.q = keyword
       page = @agent.submit(form)
-      while page do
+      while page
         page.links.each do |link|
           yield link
         end
@@ -104,7 +102,7 @@ module DomainCrawler
     private
 
     def next_page(page)
-      link = page.link_with(text: "次へ")
+      link = page.link_with(text: '次へ')
       if link.nil?
         nil
       else
@@ -115,6 +113,7 @@ module DomainCrawler
     def google_form
       google_page = @agent.get('http://www.google.co.jp/webhp?hl=ja')
       google_form = google_page.form('f')
+      google_form
     end
   end
 
@@ -124,7 +123,7 @@ module DomainCrawler
     end
 
     def add(keyword)
-      @keywords ||= Array.new
+      @keywords ||= []
       @keywords << keyword
     end
 
@@ -132,13 +131,13 @@ module DomainCrawler
       @keywords.each do |keyword|
         @search.s keyword do |link|
           begin
-	    if link.href.include?("/url?q=http") &&
-               !link.href.include?("google") &&
-               link.uri.host == nil
+            if link.href.include?('/url?q=http') &&
+               !link.href.include?('google') &&
+               link.uri.host.nil?
               yield link.click
             end
           rescue => e
-	    p e
+            p e
           end
         end
       end
@@ -165,8 +164,7 @@ module DomainCrawler
   end
 end
 
-
-#crawler = Crawler.new("c++ std vector")
-#crawler.get 2 do |host|
-#  p host
-#end
+# crawler = Crawler.new("c++ std vector")
+# crawler.get 2 do |host|
+# p host
+# end
