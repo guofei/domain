@@ -22,25 +22,6 @@ module DomainCrawler
 
     private
 
-    TERMINATOR = Object.new
-
-    def each_page_in_threads(enumerable, n_thread = 1)
-      queue = SizedQueue.new(n_thread)
-      threads = n_thread.times.map do
-        Thread.new do
-          loop do
-            v = queue.shift
-            break if v.equal?(TERMINATOR)
-            yield v
-          end
-        end
-      end
-      enumerable.each_page { |v| queue << v }
-      n_thread.times { queue << TERMINATOR }
-      threads.each(&:join)
-      enumerable
-    end
-
     def craw(page, depth, &block)
       return if page.class != Mechanize::Page
       domain = get_domain page.uri.host
