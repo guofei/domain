@@ -50,4 +50,4 @@ gem 'mechanize', '~> 2.7.3'
 
 gem 'kaminari', '~> 0.16.3'
 
-# gem 'parallel', '~> 1.4.1'
+gem 'parallel', '~> 1.6.1'

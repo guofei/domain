@@ -1,5 +1,7 @@
 # coding: utf-8
 require 'thread'
+require 'parallel'
+
 
 module DomainCrawler
   class Crawler
@@ -9,8 +11,9 @@ module DomainCrawler
       @history = History.new
     end
 
-    def get(depth = 3)
-      each_page_in_threads @search_keyword, 5 do |page|
+    def get(depth = 10)
+      pages = @search_keyword.pages
+      Parallel.each(pages, in_threads: 3) do |page|
         craw page, depth do |host|
           yield host
         end
@@ -48,19 +51,22 @@ module DomainCrawler
       end
 
       page.links.each do |link|
-        begin
-          if link.uri && link.uri.host && link.uri.host != page.uri.host
-            domain = get_domain link.uri.host
-            unless exists?(domain)
-              if depth <= 0
-                check_and_call domain, &block
-              else
-                craw(link.click, depth - 1, &block)
-              end
+        if link.uri && link.uri.host && link.uri.host != page.uri.host
+          domain = get_domain link.uri.host
+          unless exists?(domain)
+            if depth <= 0
+              check_and_call domain, &block
+              next
             end
+
+            begin
+              page = link.click
+            rescue => e
+              p e
+              next
+            end
+            craw(page, depth - 1, &block)
           end
-        rescue => e
-          p e
         end
       end
     end
@@ -127,6 +133,12 @@ module DomainCrawler
     def add(keyword)
       @keywords ||= []
       @keywords << keyword
+    end
+
+    def pages
+      pages = []
+      each_page { |page| pages << page }
+      pages
     end
 
     def each_page
