@@ -1,5 +1,5 @@
 # coding: utf-8
-require "thread"
+require 'thread'
 
 module DomainCrawler
   class Crawler
@@ -10,7 +10,7 @@ module DomainCrawler
     end
 
     def get(depth = 3)
-      @search_keyword.each_page do |page|
+      each_page_in_threads @search_keyword, 5 do |page|
         craw page, depth do |host|
           yield host
         end
@@ -19,24 +19,24 @@ module DomainCrawler
 
     private
 
-    # TERMINATOR = Object.new
+    TERMINATOR = Object.new
 
-    # def each_page_in_threads(enumerable, n_thread = 1)
-      # queue = SizedQueue.new(n_thread)
-      # threads = n_thread.times.map do
-      #   Thread.new do
-      #     loop do
-      #       v = queue.shift
-      #       break if v.equal?(TERMINATOR)
-      #       yield v
-      #     end
-      #   end
-      # end
-      # enumerable.each_page { |v| queue << v }
-      # n_thread.times { queue << TERMINATOR }
-      # threads.each(&:join)
-      # enumerable
-    # end
+    def each_page_in_threads(enumerable, n_thread = 1)
+      queue = SizedQueue.new(n_thread)
+      threads = n_thread.times.map do
+        Thread.new do
+          loop do
+            v = queue.shift
+            break if v.equal?(TERMINATOR)
+            yield v
+          end
+        end
+      end
+      enumerable.each_page { |v| queue << v }
+      n_thread.times { queue << TERMINATOR }
+      threads.each(&:join)
+      enumerable
+    end
 
     def craw(page, depth, &block)
       return if page.class != Mechanize::Page
@@ -55,7 +55,7 @@ module DomainCrawler
               if depth <= 0
                 check_and_call domain, &block
               else
-                craw(domain, depth - 1, &block)
+                craw(link.click, depth - 1, &block)
               end
             end
           end
