@@ -2,8 +2,9 @@
 require 'thread'
 require 'parallel'
 
-
 module DomainCrawler
+  class Error < StandardError; end
+
   class Crawler
     def initialize(keyword)
       @search_keyword = SearchKeyword.new
@@ -11,9 +12,9 @@ module DomainCrawler
       @history = History.new
     end
 
-    def get(depth = 10)
+    def get(depth = 20)
       pages = @search_keyword.pages
-      Parallel.each(pages, in_threads: 3) do |page|
+      Parallel.each(pages, in_threads: 5) do |page|
         craw page, depth do |host|
           yield host
         end
@@ -24,43 +25,37 @@ module DomainCrawler
 
     def craw(page, depth, &block)
       return if page.class != Mechanize::Page
-      domain = get_domain page.uri.host
-      if exists?(domain)
-        return
-      else
-        check_and_call domain, &block
-      end
+      return if exists?(page.uri.host)
+
+      run_block page.uri.host, &block
+
+      return if depth <= 0
 
       page.links.each do |link|
         if link.uri && link.uri.host && link.uri.host != page.uri.host
-          domain = get_domain link.uri.host
-          unless exists?(domain)
-            if depth <= 0
-              check_and_call domain, &block
-              next
-            end
-
-            begin
-              page = link.click
-            rescue => e
-              p e
-              next
-            end
-            craw(page, depth - 1, &block)
+          next if exists?(link.uri.host)
+          begin
+            page = link.click
+          rescue
+            next
           end
+          craw(page, depth - 1, &block)
         end
       end
     end
 
-    def check_and_call(host, &block)
-      begin
-        block.call get_domain(host)
-      end
-      @history.add get_domain(host)
+    def run_block(host, &block)
+      domain = get_domain host
+      @history.add domain
+      block.call domain
+    rescue
+      nil
     end
 
     def exists?(host)
-      @history.include? host
+      @history.include? get_domain(host)
+    rescue
+      true
     end
 
     def get_domain(host)
