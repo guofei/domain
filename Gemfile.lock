@@ -1,3 +1,17 @@
+GIT
+  remote: git://github.com/sparklemotion/mechanize.git
+  revision: d0cbc8f655a2b61672896ded945291c1b7b60aa9
+  specs:
+    mechanize (2.7.4.beta3)
+      domain_name (~> 0.5, >= 0.5.1)
+      http-cookie (~> 1.0)
+      mime-types (>= 1.17.2, < 3)
+      net-http-digest_auth (~> 1.1, >= 1.1.1)
+      net-http-persistent (~> 2.5, >= 2.5.2)
+      nokogiri (~> 1.6)
+      ntlm-http (~> 0.1, >= 0.1.1)
+      webrobots (>= 0.0.9, < 0.2)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -73,15 +87,6 @@ GEM
       nokogiri (>= 1.5.9)
     mail (2.6.3)
       mime-types (>= 1.16, < 3)
-    mechanize (2.7.3)
-      domain_name (~> 0.5, >= 0.5.1)
-      http-cookie (~> 1.0)
-      mime-types (~> 2.0)
-      net-http-digest_auth (~> 1.1, >= 1.1.1)
-      net-http-persistent (~> 2.5, >= 2.5.2)
-      nokogiri (~> 1.4)
-      ntlm-http (~> 0.1, >= 0.1.1)
-      webrobots (>= 0.0.9, < 0.2)
     mime-types (2.6.1)
     mini_portile (0.6.2)
     minitest (5.8.0)
@@ -172,7 +177,7 @@ DEPENDENCIES
   jbuilder (~> 2.0)
   jquery-rails
   kaminari (~> 0.16.3)
-  mechanize (~> 2.7.3)
+  mechanize!
   parallel (~> 1.6.1)
   public_suffix (~> 1.5.1)
   rails (= 4.2.0)

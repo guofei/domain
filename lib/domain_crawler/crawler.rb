@@ -75,7 +75,7 @@ module DomainCrawler
     def initialize
       @agent = Mechanize.new
       @agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      @agent.max_history = 1
+      @agent.max_history = nil
     end
 
     def s(keyword)

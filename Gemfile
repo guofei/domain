@@ -46,7 +46,7 @@ end
 gem 'whois', '~> 3.6.2'
 gem 'public_suffix', '~> 1.5.1'
 
-gem 'mechanize', '~> 2.7.3'
+gem 'mechanize', github: 'sparklemotion/mechanize'
 
 gem 'kaminari', '~> 0.16.3'
 
