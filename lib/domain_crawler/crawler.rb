@@ -32,16 +32,23 @@ module DomainCrawler
       return if depth <= 0
 
       page.links.each do |link|
-        if link.uri && link.uri.host && link.uri.host != page.uri.host
+        if different_host?(link, page)
           next if exists?(link.uri.host)
           begin
             page = link.click
-          rescue
+          rescue => e
+            p e
             next
           end
           craw(page, depth - 1, &block)
         end
       end
+    end
+
+    def different_host?(link, page)
+      return link.uri && link.uri.host && link.uri.host != page.uri.host
+    rescue
+      false
     end
 
     def run_block(host, &block)
