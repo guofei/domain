@@ -13,9 +13,9 @@ module DomainCrawler
     end
 
     def get(depth = 20)
-      pages = @search_keyword.pages
-      Parallel.each(pages, in_threads: 5) do |page|
-        craw page, depth do |host|
+      uris = @search_keyword.uris
+      Parallel.each(uris, in_threads: 5) do |uri|
+        craw uri, depth do |host|
           yield host
         end
       end
@@ -23,30 +23,41 @@ module DomainCrawler
 
     private
 
-    def craw(page, depth, &block)
-      return if page.class != Mechanize::Page
-      return if exists?(page.uri.host)
+    def craw(uri, depth, &block)
+      return if exists?(uri.host)
 
-      run_block page.uri.host, &block
+      run_block uri.host, &block
 
       return if depth <= 0
 
-      page.links.each do |link|
-        if different_host?(link, page)
-          next if exists?(link.uri.host)
-          begin
-            page = link.click
-          rescue => e
-            p e
-            next
-          end
-          craw(page, depth - 1, &block)
-        end
+      get_links(uri).each do |new_uri|
+        return unless different_host?(uri, new_uri)
+        next if exists?(new_uri.host)
+        craw(new_uri, depth - 1, &block)
       end
     end
 
-    def different_host?(link, page)
-      return link.uri && link.uri.host && link.uri.host != page.uri.host
+    def get_links(uri)
+      uris = []
+
+      file = open(uri)
+      doc = Nokogiri::HTML(file)
+      file.close
+
+      doc.css('a').each do |link|
+        begin
+          uris << URI.parse(link['href'])
+        rescue
+          next
+        end
+      end
+      uris
+    rescue
+      []
+    end
+
+    def different_host?(uri, new_uri)
+      return uri.host != new_uri.host
     rescue
       false
     end
@@ -72,6 +83,8 @@ module DomainCrawler
   end
 
   class Search
+    attr_reader :agent
+
     def initialize
       @agent = Mechanize.new
       @agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
@@ -81,7 +94,7 @@ module DomainCrawler
     def s(keyword)
       form = google_form
       form.q = keyword
-      page = @agent.submit(form)
+      page = agent.submit(form)
       while page
         page.links.each do |link|
           yield link
@@ -102,7 +115,7 @@ module DomainCrawler
     end
 
     def google_form
-      google_page = @agent.get('http://www.google.co.jp/webhp?hl=ja')
+      google_page = agent.get('http://www.google.co.jp/webhp?hl=ja')
       google_form = google_page.form('f')
       google_form
     end
@@ -118,10 +131,10 @@ module DomainCrawler
       @keywords << keyword
     end
 
-    def pages
-      pages = []
-      each_page { |page| pages << page }
-      pages
+    def uris
+      uris = []
+      each_page { |page| uris << page.uri }
+      uris
     end
 
     def each_page
