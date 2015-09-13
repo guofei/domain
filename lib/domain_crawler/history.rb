@@ -33,11 +33,11 @@ module DomainCrawler
     # push domain to scheduler
     def push(url)
       # return false unless check_url url
-      return false if redis.sismember KEY_HISTORY, url
+      return false if redis.sismember KEY_HISTORY, url.host
 
       redis.multi do
-        redis.sadd KEY_HISTORY, url
-        redis.sadd KEY_URL, url
+        redis.sadd KEY_HISTORY, url.host
+        redis.sadd KEY_URL, url.to_s
       end
       true
     end

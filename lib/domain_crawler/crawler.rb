@@ -5,17 +5,18 @@ module DomainCrawler
 
   class Crawler
     def initialize(url)
-      history.push url
+      history.push URI.parse(url)
     end
 
     def craw
+      download = Downloader.new
+      lam = lambda{ history.pop || Parallel::Stop }
       loop do
-        lam = lambda{ history.pop || Parallel::Stop }
         Parallel.each(lam, in_threads: 5) do |url|
-          p url
-          download = Downloader.new
+          # url = history.pop
           download.links(url).each do |uri|
-            history.push uri.to_s
+            pushed = history.push uri
+            next unless pushed
             begin
               yield get_domain(uri)
             rescue
@@ -23,7 +24,6 @@ module DomainCrawler
             end
           end
         end
-
         break if history.empty?
       end
     end
