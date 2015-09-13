@@ -53,3 +53,4 @@ gem 'kaminari', '~> 0.16.3'
 gem 'parallel', '~> 1.6.1'
 
 gem 'redis'
+gem 'redis-namespace'
