@@ -13,7 +13,8 @@ module DomainCrawler
       result = []
       doc.css('a').each do |link|
         next unless accept? link['href']
-        new_uri = compose_uri get_uri(url), link['href']
+        # new_uri = compose_uri get_uri(url), link['href']
+        new_uri = get_uri link['href']
         result << new_uri unless new_uri.nil?
       end
       result
