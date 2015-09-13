@@ -1,6 +1,5 @@
 require 'nokogiri'
 require 'open-uri'
-require 'byebug'
 
 # Download from uri or link(string)
 class Downloader
