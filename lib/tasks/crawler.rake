@@ -1,18 +1,16 @@
 namespace :crawler do
   task get: :environment do
-    crawler = DomainCrawler::Crawler.new('c++ std vector')
-    crawler.get do |host|
+    url = 'http://www.yahoo.co.jp/'
+    crawler = DomainCrawler::Crawler.new(url)
+    crawler.craw do |host|
+      break if Domain.exists?(url: host)
       p host
       whois = Whois.whois(host)
       if whois.available?
-        unless Domain.exists?(url: host)
-          Domain.create(url: host, expires_on: Time.now.prev_year, deleted: true)
-        end
+        Domain.create(url: host, expires_on: Time.now.prev_year, deleted: true)
       else
         if whois.expires_on
-          unless Domain.exists?(url: host)
-            Domain.create(url: host, expires_on: whois.expires_on)
-          end
+          Domain.create(url: host, expires_on: whois.expires_on)
         end
       end
     end

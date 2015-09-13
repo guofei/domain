@@ -1,4 +1,4 @@
-# History
+# coding: utf-8
 
 module DomainCrawler
   class History
@@ -26,9 +26,13 @@ module DomainCrawler
       redis.scard(KEY_URL) > 0
     end
 
+    def empty?
+      redis.scard(KEY_URL) <= 0
+    end
+
     # push domain to scheduler
     def push(url)
-      return false unless check_url url
+      # return false unless check_url url
       return false if redis.sismember KEY_HISTORY, url
 
       redis.multi do
@@ -38,10 +42,10 @@ module DomainCrawler
       true
     end
 
-    private
+    # private
 
-    def check_url(url)
-      url =~ /\A#{URI.regexp(%w(http, https))}\z/
-    end
+    # def check_url(url)
+    #   url =~ /\A#{URI.regexp(%w(http, https))}\z/
+    # end
   end
 end

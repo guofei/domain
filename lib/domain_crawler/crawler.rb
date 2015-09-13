@@ -1,84 +1,42 @@
 # coding: utf-8
-require 'thread'
-require 'parallel'
 
 module DomainCrawler
   class Error < StandardError; end
 
   class Crawler
-    def initialize(keyword)
-      @search_keyword = SearchKeyword.new
-      @search_keyword.add keyword
-      @history = History.new
+    def initialize(url)
+      history.push url
     end
 
-    def get(depth = 20)
-      uris = @search_keyword.uris
-      Parallel.each(uris, in_threads: 5) do |uri|
-        craw uri, depth do |host|
-          yield host
+    def craw
+      loop do
+        lam = lambda{ history.pop || Parallel::Stop }
+        Parallel.each(lam, in_threads: 5) do |url|
+          p url
+          download = Downloader.new
+          download.links(url).each do |uri|
+            history.push uri.to_s
+            begin
+              yield get_domain(uri)
+            rescue
+              next
+            end
+          end
         end
+
+        break if history.empty?
       end
     end
 
     private
 
-    def craw(uri, depth, &block)
-      return if exists?(uri.host)
-
-      run_block uri.host, &block
-
-      return if depth <= 0
-
-      get_links(uri).each do |new_uri|
-        return unless different_host?(uri, new_uri)
-        next if exists?(new_uri.host)
-        craw(new_uri, depth - 1, &block)
-      end
+    def history
+      History.instance
     end
 
-    def get_links(uri)
-      uris = []
-
-      file = open(uri)
-      doc = Nokogiri::HTML(file)
-      file.close
-
-      doc.css('a').each do |link|
-        begin
-          uris << URI.parse(link['href'])
-        rescue
-          next
-        end
-      end
-      uris
-    rescue
-      []
-    end
-
-    def different_host?(uri, new_uri)
-      return uri.host != new_uri.host
-    rescue
-      false
-    end
-
-    def run_block(host, &block)
-      domain = get_domain host
-      @history.add domain
-      block.call domain
-    rescue
-      nil
-    end
-
-    def exists?(host)
-      @history.include? get_domain(host)
-    rescue
-      true
-    end
-
-    def get_domain(host)
+    def get_domain(uri)
       PublicSuffix::List.private_domains = false
-      PublicSuffix.parse(host).domain
+      PublicSuffix.parse(uri.host).domain
     end
   end
 end
