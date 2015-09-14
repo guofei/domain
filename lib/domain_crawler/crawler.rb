@@ -1,11 +1,12 @@
 # coding: utf-8
+require 'addressable/uri'
 
 module DomainCrawler
   class Error < StandardError; end
 
   class Crawler
     def initialize(url)
-      history.push URI.parse(url)
+      history.push Addressable::URI.parse(url)
     end
 
     def craw
