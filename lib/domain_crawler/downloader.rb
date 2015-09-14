@@ -41,10 +41,12 @@ module DomainCrawler
     # @param url URI or String
     # @return URI or nil
     def get_uri(url)
-      return url if url.class == URI::HTTP || url.class == URI::HTTPS
-
-      uri = Addressable::URI.parse url
-      return uri if uri.class == URI::HTTP || uri.class == URI::HTTPS
+      if url.class == Addressable::URI
+        uri = url.normalize
+      else
+        uri = Addressable::URI.parse(url).normalize
+      end
+      return uri if uri.scheme == 'http' || uri.scheme == 'https'
       nil
     rescue
       nil
@@ -56,7 +58,7 @@ module DomainCrawler
     def compose_uri(uri, href)
       new_uri = get_uri href
       return new_uri unless new_uri.nil?
-      new_uri = Addressable::URI.join(uri.to_s, href)
+      new_uri = Addressable::URI.join(uri.to_s, href).normalize
       get_uri new_uri
     rescue
       nil
