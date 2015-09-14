@@ -44,6 +44,7 @@ group :development, :test do
 end
 
 gem 'whois', '~> 3.6.2'
+gem 'addressable', '~> 2.3.8'
 gem 'public_suffix', '~> 1.5.1'
 
 gem 'mechanize'
