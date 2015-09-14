@@ -13,7 +13,6 @@ module DomainCrawler
       lam = lambda{ history.pop || Parallel::Stop }
       loop do
         Parallel.each(lam, in_threads: 5) do |url|
-          # url = history.pop
           download.links(url).each do |uri|
             pushed = history.push uri
             next unless pushed

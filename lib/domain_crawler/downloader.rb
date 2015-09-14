@@ -32,6 +32,7 @@ module DomainCrawler
       file.close
       doc
     rescue
+      file.close if file.class == Tempfile
       nil
     end
 
